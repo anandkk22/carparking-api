@@ -19,17 +19,17 @@ public class ParkingSlots {
     @Column(name = "slot_number")
     private int slotNumber;
 
-    @Column(name = "is_occupied")
-    private String occupied;
+    @Column(name = "status")
+    private String status;
 
     public ParkingSlots() {
     }
 
-    public ParkingSlots(Long slotId, int floorId, int slotNumber, String occupied) {
+    public ParkingSlots(Long slotId, int floorId, int slotNumber, String status) {
         this.slotId = slotId;
         this.floorId = floorId;
         this.slotNumber = slotNumber;
-        this.occupied = occupied;
+        this.status = status;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ParkingSlots {
             "slotId=" + slotId +
             ", floorId=" + floorId +
             ", slotNumber=" + slotNumber +
-            ", occupied=" + occupied +
+            ", status=" + status +
             '}';
 }
 }

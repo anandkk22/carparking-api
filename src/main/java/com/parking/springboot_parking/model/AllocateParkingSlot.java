@@ -1,16 +1,17 @@
 package com.parking.springboot_parking.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDateTime;
+
+// import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+// import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+// import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-@Getter 
-@Setter 
+@Getter
+@Setter
 @Entity
 @Table(name = "parkingtransaction")
 public class AllocateParkingSlot {
@@ -22,12 +23,15 @@ public class AllocateParkingSlot {
     @Column(name = "slot_id")
     private Long slotId;
 
-    @Column (name = "pricing_type") 
+    @Column(name = "date")
+    private LocalDateTime date;
+
+    @Column(name = "pricing_type")
     private String pricingType;
 
     @Column(name = "floor_id")
     private int floorId;
-    
+
     @Column(name = "slot_number")
     private int slotNumber;
 
@@ -35,10 +39,10 @@ public class AllocateParkingSlot {
     private String vehicleNumber;
 
     @Column(name = "entry_time")
-    private String entryTime;
+    private LocalDateTime entryTime;
 
     @Column(name = "exit_time")
-    private String exitTime;
+    private LocalDateTime exitTime;
 
     @Column(name = "total_hrs")
     private String totalHrs;
@@ -46,8 +50,8 @@ public class AllocateParkingSlot {
     @Column(name = "amount")
     private Double amount;
 
-    @Column(name = "occupied")
-    private String occupied;
+    @Column(name = "status")
+    private String status;
 
     @Column(name = "mode_of_payment")
     private String modeOfPayment;
@@ -55,7 +59,9 @@ public class AllocateParkingSlot {
     public AllocateParkingSlot() {
     }
 
-    public AllocateParkingSlot(Long transactionId, Long slotId, int floorId, int slotNumber, String vehicleNumber, String entryTime,  String exitTime, String totalHrs, Double amount, String occupied, String modeOfPayment) {
+    public AllocateParkingSlot(Long transactionId, Long slotId, int floorId, int slotNumber, String vehicleNumber,
+            LocalDateTime entryTime, LocalDateTime exitTime, String totalHrs, Double amount, String status, String modeOfPayment,
+            LocalDateTime date) {
         this.transactionId = transactionId;
         this.slotId = slotId;
         this.floorId = floorId;
@@ -65,9 +71,9 @@ public class AllocateParkingSlot {
         this.exitTime = exitTime;
         this.totalHrs = totalHrs;
         this.amount = amount;
-        this.occupied = occupied;
+        this.status = status;
         this.modeOfPayment = modeOfPayment;
-
+        this.date = date;
     }
 
 }

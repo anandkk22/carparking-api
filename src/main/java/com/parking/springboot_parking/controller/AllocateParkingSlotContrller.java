@@ -1,12 +1,17 @@
 package com.parking.springboot_parking.controller;
 
+import java.util.List;
 import java.util.Optional;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,6 +31,10 @@ import com.parking.springboot_parking.repository.ParkingSlotRepository;
 @RestController
 @RequestMapping("api/v1/parkingslot")
 public class AllocateParkingSlotContrller {
+    public static final long PER_HOUR = 40;
+    public static final long FIXED = 40;
+    public static final long MINIMUM = 20;
+    public static final long MINIMUM_AMOUNT = 20;
 
     @Autowired
     private AllocateParkingSlotRepository allocateParkingSlotRepository;
@@ -40,7 +49,7 @@ public class AllocateParkingSlotContrller {
         }
 
         Optional<ParkingSlots> availableSlot = parkingSlotRepository.findAll().stream()
-                .filter(slot -> "available".equals(slot.getOccupied()))
+                .filter(slot -> "available".equals(slot.getStatus()))
                 .findFirst();
 
         if (availableSlot.isEmpty()) {
@@ -50,41 +59,61 @@ public class AllocateParkingSlotContrller {
         return ResponseEntity.ok(createAllocation(availableSlot.get(), request));
     }
 
-    private AllocateParkingSlot createAllocation(ParkingSlots slot, AllocateParkingSlotRequest request) {
-        slot.setOccupied("occupied");
-        parkingSlotRepository.save(slot);
+    // @GetMapping("/date/{currentDate}")
+    // public ResponseEntity<List<AllocateParkingSlot>> getAllParkingStatus(
+    //         @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate currentDate) {
 
-        AllocateParkingSlot allocation = new AllocateParkingSlot();
-        allocation.setSlotId(slot.getSlotId());
-        allocation.setFloorId(slot.getFloorId());
-        allocation.setSlotNumber(slot.getSlotNumber());
-        allocation.setPricingType(request.getPricingType());
-        allocation.setVehicleNumber(request.getVehicleNumber());
-        allocation.setEntryTime(LocalDateTime.now().toString());
-        allocation.setOccupied(slot.getOccupied());
+    //     LocalDateTime startOfDay = currentDate.atStartOfDay();
+    //     LocalDateTime endOfDay = currentDate.atTime(LocalTime.MAX);
 
-        return allocateParkingSlotRepository.save(allocation);
-    }
+    //     List<AllocateParkingSlot> report = allocateParkingSlotRepository.findByEntryTimeBetween(startOfDay,
+    //             endOfDay);
+
+    //     if (report.isEmpty()) {
+    //         return ResponseEntity.notFound().build();
+    //     }
+
+    //     return ResponseEntity.ok(report);
+    // }   
+    
+    @GetMapping("/date/{currentDate}/{endDate}")
+    public ResponseEntity<List<AllocateParkingSlot>> getAllParkingStatus(
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate currentDate,
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+
+        LocalDateTime startOfDay = currentDate.atStartOfDay();
+        LocalDateTime endOfDay = endDate.atTime(LocalTime.MAX);
+
+        List<AllocateParkingSlot> report = allocateParkingSlotRepository.findByEntryTimeBetween(startOfDay,
+                endOfDay);
+
+        if (report.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(report);
+    }   
 
     @PutMapping("/{id}")
     public ResponseEntity<AllocateParkingSlot> outVehicle(@PathVariable long id) {
         AllocateParkingSlot updatedAllocationPartkingSlot = allocateParkingSlotRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not exist with id: " + id));
 
-        Optional<ParkingSlots> outPark = parkingSlotRepository.findAll().stream()
+        Optional<ParkingSlots> isReadyToExit  = parkingSlotRepository.findAll().stream()
                 .filter(slot -> slot.getSlotId() == updatedAllocationPartkingSlot.getSlotId())
                 .findFirst();
 
-        outPark.ifPresent(slot -> {
-            slot.setOccupied("available");
+        isReadyToExit.ifPresent(slot -> {
+            slot.setStatus("available");
             parkingSlotRepository.save(slot);
         });
 
-        updatedAllocationPartkingSlot.setOccupied("out");
-        updatedAllocationPartkingSlot.setExitTime(LocalDateTime.now().toString());
-        Duration duration = Duration.between(
-                LocalDateTime.parse(updatedAllocationPartkingSlot.getExitTime()),
-                LocalDateTime.parse(updatedAllocationPartkingSlot.getEntryTime())).abs();
+        updatedAllocationPartkingSlot.setStatus("Ready to Exit");
+        updatedAllocationPartkingSlot.setExitTime(LocalDateTime.now());
+
+        LocalDateTime entryTime = updatedAllocationPartkingSlot.getEntryTime();
+        LocalDateTime exitTime = updatedAllocationPartkingSlot.getExitTime();
+        Duration duration = Duration.between(entryTime, exitTime).abs();
 
         long totalSeconds = duration.getSeconds();
 
@@ -97,13 +126,13 @@ public class AllocateParkingSlotContrller {
                 String.format("%d hours %d minutes %d seconds", hours, minutes, secs));
 
         if ("hourlybased".equalsIgnoreCase(updatedAllocationPartkingSlot.getPricingType())) {
-            double amount = Math.round(totalHours * 40);
-            if (amount < 20) {
-                amount = 20;
+            double amount = Math.round(totalHours * PER_HOUR);
+            if (amount < MINIMUM) {
+                amount = MINIMUM_AMOUNT;
             }
             updatedAllocationPartkingSlot.setAmount(amount);
         } else if ("fixed".equalsIgnoreCase(updatedAllocationPartkingSlot.getPricingType())) {
-            double amount = 200;
+            double amount = FIXED;
             updatedAllocationPartkingSlot.setAmount(amount);
         }
 
@@ -118,10 +147,27 @@ public class AllocateParkingSlotContrller {
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found with id: " + id));
 
         slot.setModeOfPayment(paymentMode);
-        slot.setOccupied("Paymen Done");
+        slot.setStatus("Exit");
         allocateParkingSlotRepository.save(slot);
 
         return ResponseEntity.ok(slot);
 
+    }
+
+    private AllocateParkingSlot createAllocation(ParkingSlots slot, AllocateParkingSlotRequest request) {
+        slot.setStatus("occupied");
+        parkingSlotRepository.save(slot);
+
+        AllocateParkingSlot allocation = new AllocateParkingSlot();
+        allocation.setSlotId(slot.getSlotId());
+        allocation.setDate(LocalDateTime.now());
+        allocation.setFloorId(slot.getFloorId());
+        allocation.setSlotNumber(slot.getSlotNumber());
+        allocation.setPricingType(request.getPricingType());
+        allocation.setVehicleNumber(request.getVehicleNumber());
+        allocation.setEntryTime(LocalDateTime.now());
+        allocation.setStatus(slot.getStatus());
+
+        return allocateParkingSlotRepository.save(allocation);
     }
 }
