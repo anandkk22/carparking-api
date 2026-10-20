@@ -33,6 +33,7 @@ import com.parking.springboot_parking.repository.ParkingSlotRepository;
 public class AllocateParkingSlotContrller {
     public static final long PER_HOUR = 40;
     public static final long FIXED = 40;
+    public static final long FREE = 0;
     public static final long MINIMUM = 20;
     public static final long MINIMUM_AMOUNT = 20;
 
@@ -58,23 +59,6 @@ public class AllocateParkingSlotContrller {
 
         return ResponseEntity.ok(createAllocation(availableSlot.get(), request));
     }
-
-    // @GetMapping("/date/{currentDate}")
-    // public ResponseEntity<List<AllocateParkingSlot>> getAllParkingStatus(
-    //         @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate currentDate) {
-
-    //     LocalDateTime startOfDay = currentDate.atStartOfDay();
-    //     LocalDateTime endOfDay = currentDate.atTime(LocalTime.MAX);
-
-    //     List<AllocateParkingSlot> report = allocateParkingSlotRepository.findByEntryTimeBetween(startOfDay,
-    //             endOfDay);
-
-    //     if (report.isEmpty()) {
-    //         return ResponseEntity.notFound().build();
-    //     }
-
-    //     return ResponseEntity.ok(report);
-    // }   
     
     @GetMapping("/date/{currentDate}/{endDate}")
     public ResponseEntity<List<AllocateParkingSlot>> getAllParkingStatus(
@@ -133,6 +117,9 @@ public class AllocateParkingSlotContrller {
             updatedAllocationPartkingSlot.setAmount(amount);
         } else if ("fixed".equalsIgnoreCase(updatedAllocationPartkingSlot.getPricingType())) {
             double amount = FIXED;
+            updatedAllocationPartkingSlot.setAmount(amount);
+        } else if ("free".equalsIgnoreCase(updatedAllocationPartkingSlot.getPricingType())) {
+            double amount = FREE;
             updatedAllocationPartkingSlot.setAmount(amount);
         }
 
