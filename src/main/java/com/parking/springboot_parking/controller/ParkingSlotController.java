@@ -1,6 +1,7 @@
 package com.parking.springboot_parking.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +48,20 @@ public class ParkingSlotController {
     }
 
     @PostMapping
-    public ParkingSlots addSlots(@RequestBody ParkingSlots parkingSlots) {
-        return parkingSlotRepository.save(parkingSlots);
+    public ResponseEntity<?> addSlots(@RequestBody ParkingSlots parkingSlots) {
+        List<ParkingSlots> slots = parkingSlotRepository.findAll().stream()
+                .filter(slot -> slot.getFloorId() == parkingSlots.getFloorId())
+                .toList();
+        boolean parkingSlotExists = slots.stream()
+                .anyMatch(s -> s.getSlotNumber() == parkingSlots.getSlotNumber());
+
+        if (parkingSlotExists) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("error", "Slot " + parkingSlots.getSlotNumber() + " already exists"));
+        }
+
+        return ResponseEntity.ok(parkingSlotRepository.save(parkingSlots));
     }
 
 }
