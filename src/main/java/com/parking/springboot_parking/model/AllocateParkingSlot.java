@@ -56,12 +56,22 @@ public class AllocateParkingSlot {
     @Column(name = "mode_of_payment")
     private String modeOfPayment;
 
+    @Column(name = "customer_name")
+    private String customerName;
+
+    @Column(name = "mobile_number")
+    private String mobileNumber;
+
+    @Column(name = "address")
+    private String address;
+
     public AllocateParkingSlot() {
     }
 
     public AllocateParkingSlot(Long transactionId, Long slotId, int floorId, int slotNumber, String vehicleNumber,
-            LocalDateTime entryTime, LocalDateTime exitTime, String totalHrs, Double amount, String status, String modeOfPayment,
-            LocalDateTime date) {
+            LocalDateTime entryTime, LocalDateTime exitTime, String totalHrs, Double amount, String status,
+            String modeOfPayment,
+            LocalDateTime date, String customerName, String mobileNumber, String address) {
         this.transactionId = transactionId;
         this.slotId = slotId;
         this.floorId = floorId;
@@ -74,6 +84,9 @@ public class AllocateParkingSlot {
         this.status = status;
         this.modeOfPayment = modeOfPayment;
         this.date = date;
+        this.customerName = customerName;
+        this.mobileNumber = mobileNumber;
+        this.address = address;
     }
 
 }
