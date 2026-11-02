@@ -64,18 +64,14 @@ public class AllocateParkingSlotContrller {
     
     @GetMapping("/date/{currentDate}/{endDate}")
     public ResponseEntity<List<AllocateParkingSlot>> getAllParkingStatus(
-            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate currentDate,
-            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+            @PathVariable @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate currentDate,
+            @PathVariable @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate endDate) {
 
         LocalDateTime startOfDay = currentDate.atStartOfDay();
         LocalDateTime endOfDay = endDate.atTime(LocalTime.MAX);
 
         List<AllocateParkingSlot> report = allocateParkingSlotRepository.findByEntryTimeBetween(startOfDay,
                 endOfDay);
-
-        if (report.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
 
         return ResponseEntity.ok(report);
     }   
@@ -103,13 +99,13 @@ public class AllocateParkingSlotContrller {
 
         long totalSeconds = duration.getSeconds();
 
-        long hours = totalSeconds / 3600;
-        long minutes = (totalSeconds % 3600) / 60;
-        long secs = totalSeconds % 60;
+        long hrs = totalSeconds / 3600;
+        long min = (totalSeconds % 3600) / 60;
+        // long secs = totalSeconds % 60;
 
         double totalHours = totalSeconds / 3600.0;
         updatedAllocationPartkingSlot.setTotalHrs(
-                String.format("%d hours %d minutes %d seconds", hours, minutes, secs));
+                String.format("%d hrs %d min", hrs, min));
 
         if ("hourly".equalsIgnoreCase(updatedAllocationPartkingSlot.getPricingType())) {
             double amount = Math.round(totalHours * PER_HOUR);

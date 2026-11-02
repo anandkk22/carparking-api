@@ -34,6 +34,7 @@ public class SecurityConfiguration {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/v1").permitAll()
                 .anyRequest().authenticated())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,7 +54,15 @@ public class SecurityConfiguration {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**",configuration);
+        source.registerCorsConfiguration("/**", configuration);
+
+        // below coded added for websocket connection to allow all origins and methods for /hello endpoint
+        CorsConfiguration webSocketConfiguration = new CorsConfiguration();
+        webSocketConfiguration.setAllowedOriginPatterns(List.of("*"));
+        webSocketConfiguration.setAllowedMethods(List.of("GET"));
+        webSocketConfiguration.setAllowedHeaders(List.of("*"));
+        source.registerCorsConfiguration("/hello", webSocketConfiguration);
+        // end of websocket configuration
 
         return source;
     }
